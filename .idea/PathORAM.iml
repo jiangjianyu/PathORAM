@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/OramCrypto.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramSocket.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramNode.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramStash.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramBucket.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramBucket.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramCrypto.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramNodeStorage.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramAccessController.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramStash.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramNodeStorage.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramSocket.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/PathORAM.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramNode.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OramAccessController.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Header Search Paths">
+        <CLASSES>
+          <root url="file:///usr/include" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.9/include" />
+          <root url="file:///usr/local/include" />
+        </CLASSES>
+        <SOURCES>
+          <root url="file:///usr/include" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.9/include" />
+          <root url="file:///usr/local/include" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>
