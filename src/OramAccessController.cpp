@@ -6,6 +6,7 @@
 #include <cstring>
 #include "OramAccessController.h"
 #include "OramLogger.h"
+#include "performance.h"
 
 typedef struct {
     int random;
@@ -23,7 +24,7 @@ int gen_reverse_lexicographic(int g, int oram_size, int tree_height) {
         g >>= 1;
     }
     if (pos >= oram_size)
-        pos >>= 1;
+        pos = (pos - 1) >> 1;
     return pos;
 }
 
@@ -65,6 +66,7 @@ OramAccessController::OramAccessController(char *host, int port, int oram_bucket
 }
 
 int OramAccessController::oblivious_access(int address, OramAccessOp op, unsigned char *data) {
+    P_ADD_BANDWIDTH_ORIGINAL(OramBucket::block_len);
     int position;
     int position_new;
     unsigned char read_data[OramBucket::block_len];
@@ -92,6 +94,10 @@ int OramAccessController::oblivious_access(int address, OramAccessOp op, unsigne
             evict_path(gen_reverse_lexicographic(evict_g, oram_bucket_size, oram_tree_height));
             evict_g = (evict_g + 1) % oram_bucket_leaf_count;
         }
+        OramBlockMetadata *metadata = new OramBlockMetadata[oram_tree_height + 1];
+        get_metadata(position, metadata);
+        early_reshuffle(position, metadata);
+        delete[] metadata;
 //        socket->close_connection();
     } else {
         log_sys << "Access " << address << " from stash\n";
@@ -183,7 +189,7 @@ int OramAccessController::read_path(int pos, int address, unsigned char *data) {
     }
 
     int found = read_block(pos, address, metadata_list, data);
-    early_reshuffle(pos, metadata_list);
+//    early_reshuffle(pos, metadata_list);
     delete[] metadata_list;
     return found;
 }
@@ -242,7 +248,7 @@ int OramAccessController::write_bucket(int bucket_id) {
 
 int OramAccessController::early_reshuffle(int pos, OramBlockMetadata *metadata_list) {
     for (int pos_run = pos,i = 0;;pos_run = (pos_run - 1) >> 1, ++i) {
-        if (metadata_list[i].read_counter >= OramBucket::bucket_dummy_len - 1) {
+        if (metadata_list[i].read_counter >= OramBucket::bucket_dummy_len) {
             log_sys << "early reshuffle in pos " << pos_run << "\n";
             read_bucket(pos_run);
             write_bucket(pos_run);
@@ -257,6 +263,10 @@ void OramAccessController::evict_path(int pos) {
     log_sys << "evict path in pos " << pos << "\n";
     for (int pos_run = pos,i = 0;;pos_run = (pos_run - 1) >> 1, ++i) {
         read_bucket(pos_run);
+        if (pos_run == 0)
+            break;
+    }
+    for (int pos_run = pos;;pos_run = (pos_run - 1) >> 1) {
         write_bucket(pos_run);
         if (pos_run == 0)
             break;
@@ -295,6 +305,7 @@ void OramAccessController::init() {
         socket->standard_send();
         socket->standard_recv();
     }
+    P_INIT("127.0.0.1", 30010);
     delete bucket;
     delete metadata;
 //    socket->close_connection();

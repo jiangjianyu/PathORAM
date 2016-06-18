@@ -7,6 +7,7 @@
 #include "OramLogger.h"
 #include "OramNode.h"
 #include "OramAccessController.h"
+#include "performance.h"
 
 int main (int argc, char **args) {
     if (argc <= 1)
@@ -21,16 +22,22 @@ int main (int argc, char **args) {
         unsigned char f[2000];
         OramCrypto::set_key(key);
         OramAccessController *client = new OramAccessController("127.0.0.1", 30000,
-                                        2000, 120, 135, 130, 4096);
+                                        127, 120, 135, 125, 4096);
         client->init();
-        for (int i = 0;i < 240000;i++) {
-//            data[0] = i % 256;
+        p_get_performance("127.0.0.1", 30010);
+        for (int i = 0;i < 15000;i++) {
+            data[0] = i % 256;
             client->oblivious_access(i, ORAM_ACCESS_WRITE, data);
         }
-        for (int i = 0;i < 240000;i++) {
+        for (int i = 0;i < 15000;i++) {
             client->oblivious_access(i, ORAM_ACCESS_READ, data);
-//            f[i] = data[0];
+            assert(data[0] == i % 256);
         }
+//        for (int i = 0;i < 240000;i++) {
+//            client->oblivious_access(i, ORAM_ACCESS_READ, data);
+//            f[i] = data[0];
+//        }
+        p_get_performance("127.0.0.1", 30010);
 //        for (int i = 0;i < 2000;i++) {
 //            assert(f[i] == i % 256);
 //        }

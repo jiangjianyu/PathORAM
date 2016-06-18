@@ -32,6 +32,7 @@ public:
     OramStashBlock* remove_by_address(int address);
     int remove_by_bucket(int bucket_id, int max, OramStashBlock** block_list);
     int find_edit_by_address(int address, OramAccessOp op, unsigned char data[]);
+    void iter();
     OramStash(int oram_bucket_size);
     ~OramStash();
 };

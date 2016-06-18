@@ -3,6 +3,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include "OramLogger.h"
+#include "performance.h"
 
 OramSocket::OramSocket()
 {
@@ -167,10 +168,12 @@ int OramSocket::standard_recv() {
     int status = standard_recv(ORAM_SOCKET_HEADER_SIZE);
     if (status < 0)
         return -1;
+    P_ADD_BANDWIDTH(ORAM_SOCKET_HEADER_SIZE + get_recv_header()->msg_len);
     return recv_continue(get_recv_header()->msg_len);
 }
 
 int OramSocket::standard_send() {
+    P_ADD_BANDWIDTH(ORAM_SOCKET_HEADER_SIZE + get_send_header()->msg_len);
     return standard_send(get_send_header()->msg_len + ORAM_SOCKET_HEADER_SIZE);
 }
 
