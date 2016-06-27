@@ -15,9 +15,7 @@ void OramCrypto::set_key(unsigned char *key_init) {
 void OramCrypto::encrypt_data(unsigned char ciphertext[],
                               unsigned char *data) {
     unsigned char nonce[ORAM_CRYPT_NONCE_LEN];
-    nonce[0] = 0x30;
-    nonce[1] = 0x33;
-    nonce[2] = 0x34;
+    randombytes_buf(nonce, ORAM_CRYPT_NONCE_LEN);
     crypto_secretbox_easy(ciphertext + ORAM_CRYPT_NONCE_LEN,
                           data, OramBucket::block_len, nonce, key);
     memcpy(ciphertext, nonce, ORAM_CRYPT_NONCE_LEN);

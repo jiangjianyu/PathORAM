@@ -69,39 +69,39 @@ int OramAccessController::oblivious_access(int address, OramAccessOp op, unsigne
     P_ADD_BANDWIDTH_ORIGINAL(OramBucket::block_len);
     int position;
     int position_new;
+    position = position_map[address];
+    position_new = OramCrypto::get_random(oram_bucket_leaf_count) + oram_bucket_leaf_start;
+    position_map[address] = position_new;
     unsigned char read_data[OramBucket::block_len];
-    int found_in_stash = stash->find_edit_by_address(address, op, data);
-    if (found_in_stash < 0) {
-//        socket->init();
-        position = position_map[address];
-        position_new = OramCrypto::get_random(oram_bucket_leaf_count) + oram_bucket_leaf_start;
-        position_map[address] = position_new;
-        if (read_path(position, address, read_data) <= 0) {
-            log_sys << "Access block " << address << " from new " << "\n";
-            memcpy(read_data, OramBucket::blank_data, OramBucket::block_len);
-        } else {
-            log_sys << "Access block " << address << " from server " << "\n";
-        }
-        if (op == ORAM_ACCESS_READ) {
-            memcpy(data, read_data, OramBucket::block_len);
-        } else if (op == ORAM_ACCESS_WRITE) {
-            memcpy(read_data, data, OramBucket::block_len);
-        }
+    int read_bool = read_path(position, address, read_data);
+    if (read_bool > 0) {
+        log_sys << "Access block " << address << " from server " << "\n";
         OramStashBlock *stashBlock = new OramStashBlock(read_data, address, position_new);
         stash->add(stashBlock);
-        evict_count = (evict_count + 1) % reshuffle_rate;
-        if (evict_count == 0) {
-            evict_path(gen_reverse_lexicographic(evict_g, oram_bucket_size, oram_tree_height));
-            evict_g = (evict_g + 1) % oram_bucket_leaf_count;
-        }
-        OramBlockMetadata *metadata = new OramBlockMetadata[oram_tree_height + 1];
-        get_metadata(position, metadata);
-        early_reshuffle(position, metadata);
-        delete[] metadata;
-//        socket->close_connection();
-    } else {
-        log_sys << "Access " << address << " from stash\n";
     }
+    OramStashBlock *block = stash->find_by_address(address);
+    if (!read_bool && block != NULL) {
+        log_detail << "Access block " << address << " from stash\n";
+    }
+    if (block == NULL) {
+        log_detail << "Access block " << address << " from new\n";
+        block = new OramStashBlock(OramBucket::blank_data, address, position_new);
+        stash->add(block);
+    }
+    if (op == ORAM_ACCESS_READ) {
+        memcpy(data, block->data, OramBucket::block_len);
+    } else if (op == ORAM_ACCESS_WRITE) {
+        memcpy(block->data, data, OramBucket::block_len);
+    }
+    evict_count = (evict_count + 1) % reshuffle_rate;
+    if (evict_count == 0) {
+        evict_path(gen_reverse_lexicographic(evict_g, oram_bucket_size, oram_tree_height));
+        evict_g = (evict_g + 1) % oram_bucket_leaf_count;
+    }
+    OramBlockMetadata *metadata = new OramBlockMetadata[oram_tree_height + 1];
+    get_metadata(position, metadata);
+    early_reshuffle(position, metadata);
+    delete[] metadata;
     return 0;
 }
 
@@ -189,7 +189,6 @@ int OramAccessController::read_path(int pos, int address, unsigned char *data) {
     }
 
     int found = read_block(pos, address, metadata_list, data);
-//    early_reshuffle(pos, metadata_list);
     delete[] metadata_list;
     return found;
 }
@@ -204,13 +203,16 @@ int OramAccessController::read_bucket(int bucket_id) {
     OramBlockMetadata *metadata = OramCrypto::decrypt_metadata(NULL, bucket->encrypted_metadata);
     unsigned char decrypted_data[OramBucket::block_len];
     memcpy(metadata->valid_bits, bucket->valid_bits, sizeof(bool) * OramBucket::bucket_total_len);
+    int count = 0;
     for (int i = 0;i < OramBucket::bucket_real_len;i++) {
-        if (metadata->get_address()[i] != -1 && metadata->valid_bits[metadata->get_offset()[i]]) {
+        if (metadata->get_address()[i] >= 0 && metadata->valid_bits[metadata->get_offset()[i]]) {
+            count++;
             OramCrypto::decrypt_data(decrypted_data, bucket->get_block(metadata->get_offset()[i]));
 //            log_detail << "add " << metadata->get_address()[i] << " to stash, bucket " << bucket_id << "\n";
             stash->add(new OramStashBlock(decrypted_data, metadata->get_address()[i], position_map[metadata->get_address()[i]]));
         }
     }
+    log_detail << "add " << count << "blocks to stash\n";
     delete bucket;
     delete metadata;
     return 0;
@@ -247,7 +249,7 @@ int OramAccessController::write_bucket(int bucket_id) {
 }
 
 int OramAccessController::early_reshuffle(int pos, OramBlockMetadata *metadata_list) {
-    for (int pos_run = pos,i = 0;;pos_run = (pos_run - 1) >> 1, ++i) {
+    for (int pos_run = pos, i = 0;;pos_run = (pos_run - 1) >> 1, ++i) {
         if (metadata_list[i].read_counter >= OramBucket::bucket_dummy_len) {
             log_sys << "early reshuffle in pos " << pos_run << "\n";
             read_bucket(pos_run);
@@ -261,7 +263,7 @@ int OramAccessController::early_reshuffle(int pos, OramBlockMetadata *metadata_l
 
 void OramAccessController::evict_path(int pos) {
     log_sys << "evict path in pos " << pos << "\n";
-    for (int pos_run = pos,i = 0;;pos_run = (pos_run - 1) >> 1, ++i) {
+    for (int pos_run = pos;;pos_run = (pos_run - 1) >> 1) {
         read_bucket(pos_run);
         if (pos_run == 0)
             break;

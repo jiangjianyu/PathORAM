@@ -19,28 +19,25 @@ int main (int argc, char **args) {
     } else if (!strcmp(args[1], "client")) {
         unsigned char data[4096];
         unsigned char key[ORAM_CRYPT_KEY_LEN];
-        unsigned char f[2000];
         OramCrypto::set_key(key);
         OramAccessController *client = new OramAccessController("127.0.0.1", 30000,
-                                        127, 120, 135, 125, 4096);
+                                        254, 120, 135, 120, 4096);
         client->init();
         p_get_performance("127.0.0.1", 30010);
-        for (int i = 0;i < 15000;i++) {
+        for (int i = 0;i < 25000;i++) {
             data[0] = i % 256;
             client->oblivious_access(i, ORAM_ACCESS_WRITE, data);
         }
-        for (int i = 0;i < 15000;i++) {
+        for (int i = 0;i < 25000;i++) {
             client->oblivious_access(i, ORAM_ACCESS_READ, data);
             assert(data[0] == i % 256);
         }
+
 //        for (int i = 0;i < 240000;i++) {
 //            client->oblivious_access(i, ORAM_ACCESS_READ, data);
 //            f[i] = data[0];
 //        }
         p_get_performance("127.0.0.1", 30010);
-//        for (int i = 0;i < 2000;i++) {
-//            assert(f[i] == i % 256);
-//        }
     }
     return 0;
 }

@@ -51,7 +51,7 @@ OramStashBlock* OramStash::remove_by_address(int address) {
 int OramStash::remove_by_bucket(int bucket_id, int max, OramStashBlock **block_list) {
     int remove = remove_by_bucket_helper(bucket_id, max, 0, block_list);
     P_DEL_STASH(remove);
-//    log_detail << "Delete " << remove << " blocks to " << bucket_id << "\n";
+    log_detail << "Delete " << remove << " blocks to " << bucket_id << "\n";
     return remove;
 }
 
@@ -110,6 +110,14 @@ int OramStash::find_edit_by_address(int address, OramAccessOp op, unsigned char 
         memcpy(block->data, data, OramBucket::block_len);
     }
     return 0;
+}
+
+OramStashBlock* OramStash::find_by_address(int addr) {
+    std::map<int, OramStashBlock*>::iterator itr = stash_hash.find(addr);
+    if (itr == stash_hash.end()) {
+        return NULL;
+    }
+    return itr->second;
 }
 
 OramStash::OramStash(int oram_bucket_size) {

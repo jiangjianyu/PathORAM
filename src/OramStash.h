@@ -21,17 +21,19 @@ public:
 class OramStash {
 private:
     std::map<int, OramStashBlock*> stash_hash;
-    int *counter;
+
     int oram_bucket_size;
     int oram_bucket_leaf_start;
     int oram_bucket_leaf_size;
     std::list<OramStashBlock*> *stash_list;
     int remove_by_bucket_helper(int pos, int len, int start, OramStashBlock *blocklist[]);
 public:
+    int *counter;
     void add(OramStashBlock *block);
     OramStashBlock* remove_by_address(int address);
     int remove_by_bucket(int bucket_id, int max, OramStashBlock** block_list);
     int find_edit_by_address(int address, OramAccessOp op, unsigned char data[]);
+    OramStashBlock* find_by_address(int addr);
     void iter();
     OramStash(int oram_bucket_size);
     ~OramStash();
